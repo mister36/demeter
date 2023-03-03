@@ -2,38 +2,15 @@
 pragma solidity >=0.8.17;
 
 interface IVault {
-    // no need for shares
-    /* 
-       deposit:
-       deposit erc20, mints shares
-       ============================
+    function deposit(uint _amount) external;
 
-       borrow:
-       receive synth up to collateralization limit (checked by shares owned)
-       ============================
+    function withdraw(uint _amount) external;
 
-       repay:
-       repays with underlying or synth
-       ============================
-
-       withdraw
-       ============================
-
-       liquidate
-       ============================
-    
-
-
-    */
-    function deposit(uint amount) external;
-
-    function withdraw(uint amount) external;
-
-    function borrow(uint amount) external;
+    function mint(uint _amount) external;
 
     function repay(uint _underlyingAmount, uint _synthAmount) external;
 
-    function liquidate(uint amount) external;
+    function liquidate(uint _amount) external;
 
     function harvest() external;
 }
