@@ -18,12 +18,12 @@ contract GFVault is BaseVault {
     /// @dev fidu contract
     IERC20 fidu = IERC20(0x6a445E9F40e0b97c92d0b8a3366cEF1d67F700BF);
 
-    constructor(IERC20 _asset, dToken _synth) BaseVault(_asset, _synth) {
-        asset.approve(address(curve), type(uint).max);
+    constructor(IERC20 _underlying, dToken _synth) BaseVault(_underlying, _synth) {
+        underlying.approve(address(curve), type(uint).max);
     }
 
     /// @inheritdoc BaseVault
-    function _runStrategy(uint _amount) internal override {
+    function _runStrategy(uint _amount, address _user) internal override {
         // swap usdc for fidu
         curve.exchange_underlying(1, 0, _amount, 0);
 

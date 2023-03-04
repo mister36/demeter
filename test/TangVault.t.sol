@@ -19,6 +19,10 @@ contract TangVaultTest is Test {
     IERC20 asset = IERC20(0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063);
     dToken synth;
 
+    uint full = 100 * (10 ** 18);
+    uint half = full / 2;
+    uint tenth = full / 10;
+
     constructor() {}
 
     function setUp() public virtual {
@@ -30,46 +34,47 @@ contract TangVaultTest is Test {
         utils = new Utils();
 
         // sets address dai balance, approves
-        deal(address(asset), user, 100 * (10 ** 6));
-        asset.approve(address(vault), 100 * (10 ** 6));
-        synth.approve(address(vault), 100 * (10 ** 6));
+        deal(address(asset), user, full);
+        asset.approve(address(vault), full);
+        synth.approve(address(vault), full);
 
         vm.stopPrank();
     }
 
     function testDeposit() public {
         vm.startPrank(user);
-        vault.deposit(50 * (10 ** 6));
-        assertEq(asset.balanceOf(user), 50 * (10 ** 6));
+        vault.deposit(half);
+        assertEq(asset.balanceOf(user), half);
         vm.stopPrank();
     }
 
     function testMint() public {
         vm.startPrank(user);
 
-        vault.deposit(50 * (10 ** 6));
-        vault.mint(10 * (10 ** 6));
-        assertEq(synth.balanceOf(user), 10 * (10 ** 6));
+        vault.deposit(half);
+        vault.mint(tenth);
+        assertEq(synth.balanceOf(user), tenth);
 
         vm.stopPrank();
     }
 
     function testMintReverted() public {
         vm.startPrank(user);
-        vault.deposit(50 * (10 ** 6));
+        vault.deposit(half);
 
         vm.expectRevert("Unhealthy collateralization ratio");
-        vault.mint(26 * (10 ** 6));
+        vault.mint(26 * (10 ** 18));
 
         vm.stopPrank();
     }
 
     function testRepay() public {
         vm.startPrank(user);
-        vault.deposit(50 * (10 ** 6));
-        vault.mint(10 * (10 ** 6));
+        vault.deposit(half);
+        vault.mint(tenth);
 
-        vault.repay(0, 10 * (10 ** 6));
+        vault.repay(0, tenth);
         assertEq(synth.balanceOf(user), 0);
+        console.logBytes32(bytes4(keccak256(bytes("rebase(uint256)"))));
     }
 }

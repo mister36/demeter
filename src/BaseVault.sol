@@ -17,7 +17,7 @@ abstract contract BaseVault is IVault {
     uint public constant COLLATERALIZATION_SCALAR = 1_000_000;
 
     /// @dev underlying asset for vault (stablecoin or weth)
-    IERC20 public asset;
+    IERC20 public underlying;
 
     /// @dev synthetic token for vault (dUSD or dETH)
     dToken public synth;
@@ -38,41 +38,44 @@ abstract contract BaseVault is IVault {
     /// @dev mapping of users to collateralized debt positions
     mapping(address => CDP) private _cdps;
 
-    constructor(IERC20 _asset, dToken _synth) {
-        asset = _asset;
+    constructor(IERC20 _underlying, dToken _synth) {
+        underlying = _underlying;
         synth = _synth;
     }
 
     // TODO: check whether asset is weth. If so, swap to usdc and buy call option
     function deposit(uint _amount) external {
         CDP storage _cdp = _cdps[msg.sender];
+        updateCDP(msg.sender);
 
-        asset.transferFrom(msg.sender, address(this), _amount);
+        underlying.transferFrom(msg.sender, address(this), _amount);
         _cdp.totalDeposited += _amount;
         totalDeposited += _amount;
 
         emit TokensDeposited(msg.sender, _amount);
 
-        _runStrategy(_amount);
+        _runStrategy(_amount, msg.sender);
     }
 
     function withdraw(uint _amount) external {
         CDP storage _cdp = _cdps[msg.sender];
+        updateCDP(msg.sender);
 
         require(withdrawable(msg.sender) >= _amount, "Exceeds withdrawable amounts");
         _cdp.totalDeposited -= _amount;
         checkHealth(msg.sender);
 
-        asset.transfer(msg.sender, _amount);
+        underlying.transfer(msg.sender, _amount);
 
         emit TokensWithdrawn(msg.sender, _amount);
     }
 
     function repay(uint _underlyingAmount, uint _synthAmount) external {
         CDP storage _cdp = _cdps[msg.sender];
+        updateCDP(msg.sender);
 
         if (_underlyingAmount > 0) {
-            asset.transferFrom(msg.sender, address(this), _underlyingAmount);
+            underlying.transferFrom(msg.sender, address(this), _underlyingAmount);
         }
 
         if (_synthAmount > 0) {
@@ -95,6 +98,7 @@ abstract contract BaseVault is IVault {
     /// @param _amount the amount of synth tokens to borrow.
     function mint(uint256 _amount) external {
         CDP storage _cdp = _cdps[msg.sender];
+        updateCDP(msg.sender);
         uint _totalCredit = _cdp.totalCredit;
 
         if (_totalCredit < _amount) {
@@ -127,8 +131,10 @@ abstract contract BaseVault is IVault {
         );
     }
 
-    function updateCDP(CDP storage _cdp) internal {
-        uint _earnedYield = _getEarnedYield();
+    function updateCDP(address _user) internal {
+        CDP storage _cdp = _cdps[_user];
+
+        uint _earnedYield = _getEarnedYield(_cdp, _user);
         if (_earnedYield > _cdp.totalDebt) {
             _cdp.totalDebt = 0;
             _cdp.totalCredit = _earnedYield - _cdp.totalDebt;
@@ -139,8 +145,8 @@ abstract contract BaseVault is IVault {
 
     function withdrawable(address user) public virtual returns (uint total) {}
 
-    function _getEarnedYield() internal view virtual returns (uint) {}
+    function _getEarnedYield(CDP storage _cdp, address _user) internal view virtual returns (uint) {}
 
     /// @notice strategies always ran with USDC
-    function _runStrategy(uint _amount) internal virtual;
+    function _runStrategy(uint _amount, address _user) internal virtual;
 }
