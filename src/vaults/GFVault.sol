@@ -37,4 +37,6 @@ contract GFVault is BaseVault {
         );
         require(success, "Staking failed");
     }
+
+    function _sendFunds(uint _amount, address _user) internal override {}
 }

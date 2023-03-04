@@ -12,7 +12,7 @@ import "../src/tokens/dUSD.sol";
 
 contract TangVaultTest is Test {
     Utils internal utils;
-    address user = 0x91411c9CE861b8F63e53458DA28F0A2DFE702eE3; // TODO: change
+    address user = 0x91411c9CE861b8F63e53458DA28F0A2DFE702eE3;
     TangVault vault;
 
     // dai on polygon
@@ -75,6 +75,19 @@ contract TangVaultTest is Test {
 
         vault.repay(0, tenth);
         assertEq(synth.balanceOf(user), 0);
-        console.logBytes32(bytes4(keccak256(bytes("rebase(uint256)"))));
+
+        vm.stopPrank();
+    }
+
+    function testWithdraw() public {
+        vm.startPrank(user);
+
+        uint startBalance = asset.balanceOf(user);
+        vault.deposit(full);
+
+        vault.withdraw(half);
+        assertGt(startBalance - half, asset.balanceOf(user));
+
+        vm.stopPrank();
     }
 }

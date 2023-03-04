@@ -18,4 +18,6 @@ contract MapleVault is BaseVault {
     function _runStrategy(uint _amount, address _address) internal override {
         pool.deposit(_amount, address(this));
     }
+
+    function _sendFunds(uint _amount, address _user) internal override {}
 }

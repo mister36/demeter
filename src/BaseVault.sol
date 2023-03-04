@@ -65,8 +65,7 @@ abstract contract BaseVault is IVault {
         _cdp.totalDeposited -= _amount;
         checkHealth(msg.sender);
 
-        underlying.transfer(msg.sender, _amount);
-
+        _sendFunds(_amount, msg.sender);
         emit TokensWithdrawn(msg.sender, _amount);
     }
 
@@ -125,10 +124,12 @@ abstract contract BaseVault is IVault {
     function checkHealth(address user) internal view {
         CDP storage _cdp = _cdps[user];
 
-        require(
-            (_cdp.totalDeposited / _cdp.totalDebt) * COLLATERALIZATION_SCALAR >= DEFAULT_COLLATERALIZATION,
-            "Unhealthy collateralization ratio"
-        );
+        if (_cdp.totalDebt > 0) {
+            require(
+                (_cdp.totalDeposited / _cdp.totalDebt) * COLLATERALIZATION_SCALAR >= DEFAULT_COLLATERALIZATION,
+                "Unhealthy collateralization ratio"
+            );
+        }
     }
 
     function updateCDP(address _user) internal {
@@ -143,10 +144,11 @@ abstract contract BaseVault is IVault {
         }
     }
 
-    function withdrawable(address user) public virtual returns (uint total) {}
+    function withdrawable(address _user) public view virtual returns (uint total) {}
 
     function _getEarnedYield(CDP storage _cdp, address _user) internal view virtual returns (uint) {}
 
-    /// @notice strategies always ran with USDC
     function _runStrategy(uint _amount, address _user) internal virtual;
+
+    function _sendFunds(uint _amount, address _user) internal virtual;
 }
