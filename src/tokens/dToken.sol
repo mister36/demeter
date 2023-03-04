@@ -23,6 +23,7 @@ contract dToken is ERC20, AccessControl {
      * See {ERC20-_burn}.
      */
     function burn(uint256 amount) external virtual {
+        require(hasRole(BURNER_ROLE, msg.sender), "Caller is not a burner");
         _burn(_msgSender(), amount);
     }
 
@@ -38,10 +39,7 @@ contract dToken is ERC20, AccessControl {
      * `amount`.
      */
     function burnFrom(address _account, uint256 _amount) external {
-        require(_amount > allowance(_account, _msgSender()), "ERC20: burn amount exceeds allowance");
-        uint256 decreasedAllowance = allowance(_account, _msgSender()) - _amount;
-
-        _approve(_account, _msgSender(), decreasedAllowance);
+        _approve(_account, _msgSender(), _amount);
         _burn(_account, _amount);
     }
 }

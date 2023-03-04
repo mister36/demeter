@@ -63,6 +63,8 @@ abstract contract BaseVault is IVault {
         _cdp.totalDeposited -= _amount;
         checkHealth(msg.sender);
 
+        asset.transfer(msg.sender, _amount);
+
         emit TokensWithdrawn(msg.sender, _amount);
     }
 
@@ -106,6 +108,7 @@ abstract contract BaseVault is IVault {
         }
 
         synth.mint(msg.sender, _amount);
+        totalDebt += _amount;
     }
 
     function liquidate(uint _amount) external virtual {}
