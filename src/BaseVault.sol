@@ -2,22 +2,23 @@
 pragma solidity >=0.8.17;
 
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "./interfaces/IVault.sol";
-import "./interfaces/IERC20MintableBurnable.sol";
+import "./tokens/dToken.sol";
 
 abstract contract BaseVault is IVault {
     event TokensDeposited(address account, uint amount);
     event TokensWithdrawn(address account, uint amount);
     event TokensRepaid(address account, uint assetAmount, uint synthAmount);
 
-    /// @dev default collateralization level (2_000_000 = 200%, i.e. loan <= 50% of collateral)
-    uint public constant DEFAULT_COLLATERALIZATION = 2_000_000;
+    /// @dev default collateralization level (2 = 200%, i.e. loan <= 50% of collateral)
+    uint public constant DEFAULT_COLLATERALIZATION = 2;
 
     /// @dev underlying asset for vault (stablecoin or weth)
     IERC20 public asset;
 
     /// @dev synthetic token for vault (dUSD or dETH)
-    IERC20MintableBurnable public synth;
+    dToken public synth;
 
     /// @dev total amount of underlying assets deposited onto contract
     uint totalDeposited;
@@ -35,7 +36,7 @@ abstract contract BaseVault is IVault {
     /// @dev mapping of users to collateralized debt positions
     mapping(address => CDP) private _cdps;
 
-    constructor(IERC20 _asset, IERC20MintableBurnable _synth) {
+    constructor(IERC20 _asset, dToken _synth) {
         asset = _asset;
         synth = _synth;
     }
