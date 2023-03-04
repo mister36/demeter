@@ -11,8 +11,10 @@ abstract contract BaseVault is IVault {
     event TokensWithdrawn(address account, uint amount);
     event TokensRepaid(address account, uint assetAmount, uint synthAmount);
 
-    /// @dev default collateralization level (2 = 200%, i.e. loan <= 50% of collateral)
-    uint public constant DEFAULT_COLLATERALIZATION = 2;
+    /// @dev default collateralization level (2_000_000 = 200%, i.e. loan <= 50% of collateral)
+    uint public constant DEFAULT_COLLATERALIZATION = 2_000_000;
+
+    uint public constant COLLATERALIZATION_SCALAR = 1_000_000;
 
     /// @dev underlying asset for vault (stablecoin or weth)
     IERC20 public asset;
@@ -116,7 +118,10 @@ abstract contract BaseVault is IVault {
     function checkHealth(address user) internal view {
         CDP storage _cdp = _cdps[user];
 
-        require(_cdp.totalDeposited / _cdp.totalDebt >= DEFAULT_COLLATERALIZATION, "Unhealthy collateralization ratio");
+        require(
+            (_cdp.totalDeposited / _cdp.totalDebt) * COLLATERALIZATION_SCALAR >= DEFAULT_COLLATERALIZATION,
+            "Unhealthy collateralization ratio"
+        );
     }
 
     function updateCDP(CDP storage _cdp) internal {
